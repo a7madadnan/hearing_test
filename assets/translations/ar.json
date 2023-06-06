@@ -1,0 +1,13 @@
+{
+    "start":"أبدأ",
+    "start_the_test":"أبدأ الفحص",
+    "hearing_guider": "مرشد السمع",
+    "home_description":" هذا البرنامج مخصص لفحص جودة الاستجابة السمعية",
+    "before_you_start":"قبل ان تبدأ الفحص يرجى التأكد من التالي",
+    "connect_headphones": "أربط السماعات",
+    "turn_the_volume_up":"ارفع الصوت لاعلى مستوى",
+    "left_ear":"ألأذن اليسرى",
+    "right_ear":"ألأذن اليمنى",
+    "i_can_hear": "أستطيع السماع",
+    "i_can_not_hear": "لا أستطيع السماع"
+}

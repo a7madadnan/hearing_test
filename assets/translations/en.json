@@ -1,0 +1,14 @@
+{
+    "start":"Start",
+    "start_the_test":"Start the test",
+    "hearing_guider": "Hearing Guider",
+    "home_description":"This program is for checking the quality of the auditory response",
+    "before_you_start":"before you start Please make sure of the following",
+    "connect_headphones": "Connect headphones",
+    "turn_the_volume_up":"Turn the volume up",
+    "left_ear":"Left Ear",
+    "right_ear":"Right Ear",
+    "i_Can_hear": "I Can Hear",
+    "i_can_not_hear": "I Can Not Hear"
+
+}
