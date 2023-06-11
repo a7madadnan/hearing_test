@@ -1,157 +1,188 @@
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:sound_generator/sound_generator.dart';
-import 'package:sound_generator/waveTypes.dart';
 
-final frequencyProvider = StateProvider<int>((ref) {
-  const int frequency = 250;
-  return frequency;
+final resultListProvider = StateProvider<List<Result>>((ref) {
+  final List<Result> resultList = [];
+  return resultList;
 });
-final volumeProvider = StateProvider<double>((ref) {
-  const double volume = 0.1;
-  return volume;
-});
-List<int> frequencies = [250, 500, 1000, 2000, 4000, 8000];
-List<double> volumes = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
-enum Frequency {
-  f250(frequency: 250),
-  f500(frequency: 500),
-  f1000(frequency: 1000),
-  f2000(frequency: 2000),
-  f4000(frequency: 4000),
-  f8000(frequency: 8000),
-  ;
-
-  const Frequency({required this.frequency});
+class Result {
+  final double volume;
   final int frequency;
+  final bool isLeft;
+
+  Result({required this.volume, required this.frequency, required this.isLeft});
 }
 
 class Sound {
-  final double frequency;
+  final int frequency;
   final double volume;
   final double balance;
   final int nofYes;
   final int nofNo;
-  final bool isDone;
+  final int nofClicks;
   final bool isFinished;
+  final int rightLevel;
+  final int leftLevel;
+  final bool isLeft;
   Sound({
     required this.frequency,
     required this.volume,
-    required this.isDone,
     required this.isFinished,
     this.nofYes = 0,
     this.nofNo = 0,
-    this.balance = 0,
+    this.balance = -1,
+    this.rightLevel = 0,
+    this.nofClicks = 0,
+    this.isLeft = false,
+    this.leftLevel = 0,
   });
-  Sound copyWith({
-    double? frequency,
-    double? volume,
-    double? balance,
-    int? nofYes,
-    int? nofNo,
-    bool? isDone,
-    bool? isFinished,
-  }) {
+  Sound copyWith(
+      {int? frequency,
+      double? volume,
+      double? balance,
+      int? nofYes,
+      int? nofNo,
+      int? nofClicks,
+      bool? isFinished,
+      int? rightLevel,
+      int? leftLevel,
+      bool? isLeft}) {
     return Sound(
       frequency: frequency ?? this.frequency,
       volume: volume ?? this.volume,
-      isDone: isDone ?? this.isDone,
       isFinished: isFinished ?? this.isFinished,
       nofNo: nofNo ?? this.nofNo,
       nofYes: nofYes ?? this.nofYes,
       balance: balance ?? this.balance,
+      rightLevel: rightLevel ?? this.rightLevel,
+      leftLevel: leftLevel ?? this.leftLevel,
+      nofClicks: nofClicks ?? this.nofClicks,
+      isLeft: isLeft ?? this.isLeft,
     );
-  }
-
-  void soundGenerate() {
-    SoundGenerator.init(96000);
-    SoundGenerator.setFrequency(frequency);
-    SoundGenerator.setBalance(balance);
-    SoundGenerator.setVolume(volume);
-    SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);
-    SoundGenerator.play();
   }
 }
 
 class SoundStateNotifier extends StateNotifier<Sound> {
+  AudioPlayer player = AudioPlayer();
+
   SoundStateNotifier()
-      : super(Sound(
-            frequency: 250, volume: 0.3, isDone: false, isFinished: false));
-  void playSound() {
+      : super(Sound(frequency: 250, volume: 0.30, isFinished: false));
+  List<Sound> resultSound = [];
+  void playSound() async {
+    String audioasset = "assets/tones/${state.frequency}.wav";
+    ByteData bytes = await rootBundle.load(audioasset);
+    Uint8List soundbytes =
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes);
+    await player.setSourceBytes(soundbytes);
+    Source source = player.source!;
 
-    state.soundGenerate();
+    player.setReleaseMode(ReleaseMode.loop);
+    double volume = state.volume;
+    print(volume);
+    await player.play(
+      source,
+      volume: volume,
+      balance: state.balance,
+    );
   }
 
-  void initialize() {}
-
-  void stop() {
-    SoundGenerator.stop();
-  }
-
-  void raiseVolume() {
-    double volume = state.volume + 0.1;
+  void get raiseVolume {
+    double volume = state.volume + 0.10;
     state = state.copyWith(volume: volume);
   }
 
-  void downVolume() {
-    double volume = state.volume - 0.1;
+  void get raiseFrequency {
+    int? frequency;
+    int? rightLevel;
+    int? leftLevel;
+    if (state.frequency < 8000) {
+      frequency = state.frequency * 2;
+
+      if (!state.isLeft) {
+        if (state.rightLevel <= 6) {
+          rightLevel = state.rightLevel + 1;
+        } else {
+          rightLevel = 6;
+        }
+      }
+      if (state.isLeft) {
+        if (state.leftLevel <= 6) {
+          leftLevel = state.leftLevel + 1;
+        } else {
+          leftLevel = 6;
+        }
+      }
+    } else {
+      frequency = 250;
+      finish();
+    }
+
+    state = state.copyWith(
+        frequency: frequency, rightLevel: rightLevel, leftLevel: leftLevel);
+  }
+
+  void get downVolume {
+    double volume = state.volume - 0.10;
     state = state.copyWith(volume: volume);
   }
-  // void didNotHeared() {
-  //   if (state.frequency >= 250 && state.frequency < 8000) {
-  //     if (state.volume <= 0.1 && state.volume < 1 && state.nofNo <= 2) {
-  //       state = Sound(
-  //           frequency: state.frequency,
-  //           volume: state.volume == 0.1 ? state.volume + 0.2 : state.volume + 0.1,
-  //           isDone: false,
-  //           isFinished: false);
 
-  //     } else if (state.nofNo == 2) {
-  //       Sound(
-  //           frequency: state.frequency,
-  //           volume: state.volume,
-  //           isDone: true,
-  //           isFinished: false);
+  void get reset {
+    state = state.copyWith(volume: 0.3, nofNo: 0, nofYes: 0, nofClicks: 0);
+  }
 
-  //     }
+  void get saidYes {
+    int nofYes = state.nofYes + 1;
+    state = state.copyWith(nofYes: nofYes);
+    print(nofYes);
+  }
 
-  //   } else {
-  //     state = Sound(
-  //         frequency: state.frequency,
-  //         volume: state.volume,
-  //         isDone: true,
-  //         isFinished: true);
+  void get saidNo {
+    int nofNo = state.nofNo + 1;
+    state = state.copyWith(nofNo: nofNo);
+  }
 
-  //   }
-  // }
+  void finish() {
+    if (!state.isLeft) {
+      state = state.copyWith(
+        isLeft: true,
+        frequency: 250,
+        volume: 0.3,
+        nofNo: 0,
+        nofYes: 0,
+        leftLevel: 0,
+        nofClicks: 0,
+        balance: 1,
+      );
+    } else {
+      state = state.copyWith(isFinished: true);
+      player.pause();
+      player.dispose();
+    }
+  }
 
-  // void didHeared() {
-  //   if (state.frequency >= 250 && state.frequency < 8000) {
-  //     if (state.volume <= 0.1 && state.volume < 1 && state.nofYes <= 2) {
-  //       state = Sound(
-  //           frequency: state.frequency,
-  //           volume: state.volume - 0.1,
-  //           isDone: false,
-  //           isFinished: false);
+  void canHear() {
+    saidYes;
 
-  //     } else if (state.nofNo == 2) {
-  //       Sound(
-  //           frequency: state.frequency,
-  //           volume: state.volume,
-  //           isDone: true,
-  //           isFinished: false);
+    if (state.volume > 0.1 && state.nofNo == 0) {
+      downVolume;
+    } else {
+      raiseFrequency;
+      reset;
+    }
+  }
 
-  //     }
+  void cannotHear() {
+    saidNo;
 
-  //   } else {
-  //     state = Sound(
-  //         frequency: state.frequency,
-  //         volume: state.volume,
-  //         isDone: true,
-  //         isFinished: true);
-
-  //   }
-  // }
+    if (state.volume <= 0.8 && state.nofYes == 0) {
+      raiseVolume;
+    } else {
+      raiseFrequency;
+      reset;
+    }
+  }
 }
 
 final soundStateNotifierProvider =

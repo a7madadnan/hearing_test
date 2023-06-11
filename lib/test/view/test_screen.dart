@@ -1,20 +1,16 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:hearing_test/components/neum_container.dart';
 import 'package:hearing_test/constants/style_constants/app_colors.dart';
 import 'package:hearing_test/test/provider/test_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'dart:ui' as ui;
-
 import 'package:lottie/lottie.dart';
-import 'package:sound_generator/sound_generator.dart';
-import 'package:sound_generator/waveTypes.dart';
-// import 'package:sound_generator/sound_generator.dart';
-// import 'package:sound_generator/waveTypes.dart';
-
 import '../../components/neum_button.dart';
+import '../../routes/routes.dart';
 
 class TestScreen extends ConsumerStatefulWidget {
   const TestScreen({super.key});
@@ -23,48 +19,26 @@ class TestScreen extends ConsumerStatefulWidget {
 }
 
 class _TestScreenState extends ConsumerState<TestScreen> {
-   bool isPlaying = false;
-  double frequency = 20;
-  double balance = 0;
-  double volume = 1;
-  waveTypes waveType = waveTypes.SINUSOIDAL;
-  int sampleRate = 96000;
+  AudioPlayer player = AudioPlayer();
+
   @override
   void dispose() {
+    ref.read(soundStateNotifierProvider.notifier).dispose();
+    ref.read(soundStateNotifierProvider.notifier).player.dispose();
     super.dispose();
-    SoundGenerator.release();
   }
 
   @override
   void initState() {
+    ref.read(soundStateNotifierProvider.notifier).playSound();
     super.initState();
-    isPlaying = false;
-
-    SoundGenerator.init(sampleRate);
-
-    SoundGenerator.onIsPlayingChanged.listen((value) {
-      setState(() {
-        isPlaying = value;
-      });
-    });
-
-   
-
-    SoundGenerator.setAutoUpdateOneCycleSample(true);
-    //Force update for one time
-    SoundGenerator.refreshOneCycleData();
   }
 
   @override
   Widget build(BuildContext context) {
-    late Sound sound;
+    Sound sound = ref.watch(soundStateNotifierProvider);
+    bool isFinished = ref.watch(soundStateNotifierProvider).isFinished;
 
-    // waveTypes waveType = waveTypes.SINUSOIDAL;
-    // int sampleRate = 96000;
-    sound = ref.watch(soundStateNotifierProvider);
-    final double volume = sound.volume;
-    print(volume);
-    ref.read(soundStateNotifierProvider.notifier).playSound();
     return Scaffold(
       backgroundColor: AppColor.bgColor,
       body: SafeArea(
@@ -80,12 +54,16 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                     child: NeumorphicContainer(
                       depth: 5,
                       padding: 2,
-                      beginColor: AppColor.firstleniarColor,
-                      endColor: AppColor.secondleniarColor,
+                      color: !sound.isLeft ? null : AppColor.bgColor,
+                      beginColor:
+                          !sound.isLeft ? AppColor.firstleniarColor : null,
+                      endColor:
+                          !sound.isLeft ? AppColor.secondleniarColor : null,
                       child: Text(
                         'right_ear'.tr(),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20),
+                        style: TextStyle(
+                            color: !sound.isLeft ? Colors.white : Colors.black,
+                            fontSize: 20),
                       ),
                     ),
                   ),
@@ -95,9 +73,17 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                   Expanded(
                     child: NeumorphicContainer(
                       padding: 2,
-                      color: AppColor.bgColor,
-                      child: Text('left_ear'.tr(),
-                          style: const TextStyle(fontSize: 20)),
+                      color: sound.isLeft ? null : AppColor.bgColor,
+                      beginColor:
+                          sound.isLeft ? AppColor.firstleniarColor : null,
+                      endColor:
+                          sound.isLeft ? AppColor.secondleniarColor : null,
+                      child: Text(
+                        'left_ear'.tr(),
+                        style: TextStyle(
+                            color: sound.isLeft ? Colors.white : Colors.black,
+                            fontSize: 20),
+                      ),
                     ),
                   )
                 ],
@@ -110,21 +96,50 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                 children: [
                   Expanded(
                     child: NeumorphicContainer(
-                        depth: 5,
-                        padding: 6,
+                        horizantalpadding: 2,
+                        depth: sound.isLeft ? -5 : 5,
+                        padding: 2,
                         color: AppColor.bgColor,
-                        height: 30,
-                        child: Container()),
+                        height: 40,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: sound.rightLevel,
+                            itemBuilder: (BuildContext context, int index) {
+                              return const Padding(
+                                padding: EdgeInsets.all(1.5),
+                                child: NeumorphicContainer(
+                                  shape: NeumorphicBoxShape.circle(),
+                                  height: 23,
+                                  width: 23,
+                                  color: AppColor.mainAccentColor,
+                                ),
+                              );
+                            })),
                   ),
                   const SizedBox(
                     width: 24,
                   ),
                   Expanded(
                     child: NeumorphicContainer(
-                        height: 30,
-                        padding: 6,
+                        horizantalpadding: 2,
+                        depth: sound.isLeft ? 5 : -5,
+                        padding: 2,
                         color: AppColor.bgColor,
-                        child: Container()),
+                        height: 40,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: sound.leftLevel,
+                            itemBuilder: (BuildContext context, int index) {
+                              return const Padding(
+                                padding: EdgeInsets.all(1.5),
+                                child: NeumorphicContainer(
+                                  shape: NeumorphicBoxShape.circle(),
+                                  height: 23,
+                                  width: 23,
+                                  color: AppColor.mainAccentColor,
+                                ),
+                              );
+                            })),
                   )
                 ],
               ),
@@ -143,10 +158,8 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                   NeumorphicContainer(
                     padding: 2,
                     color: AppColor.bgColor,
-                    child: Text(
-                      sound.frequency.toString(),
-                      style: const TextStyle(fontSize: 20),
-                    ),
+                    child: Text("${sound.frequency} Hz",
+                        style: const TextStyle(fontSize: 20)),
                   ),
                   const SizedBox(
                     width: 24,
@@ -154,7 +167,7 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                   NeumorphicContainer(
                     padding: 2,
                     color: AppColor.bgColor,
-                    child: Text("${sound.volume * 100}",
+                    child: Text("${(sound.volume * 100).toInt()}dB",
                         style: const TextStyle(fontSize: 20)),
                   )
                 ],
@@ -170,14 +183,19 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                 endColor: AppColor.secondleniarColor,
                 text: 'i_can_hear'.tr(),
                 onPressed: () {
-                  ref.read(soundStateNotifierProvider.notifier).stop();
-                  ref.read(soundStateNotifierProvider.notifier).downVolume();
+                  Result result = Result(
+                      volume: ref.read(soundStateNotifierProvider).volume,
+                      frequency: ref.read(soundStateNotifierProvider).frequency,
+                      isLeft: ref.read(soundStateNotifierProvider).isLeft);
+                       print(ref.read(resultListProvider));
+                  ref.read(resultListProvider).add(result);
+                  ref.read(soundStateNotifierProvider.notifier).canHear();
 
                   ref.read(soundStateNotifierProvider.notifier).playSound();
 
-                  // volume = ref.watch(soundStateNotifierProvider).volume;
-                  // SoundGenerator.setVolume(volume);
-                  // SoundGenerator.play();
+                  if (isFinished) {
+                    Navigator.pushNamed(context, Routes.result);
+                  }
                 },
               ),
             ),
@@ -188,15 +206,23 @@ class _TestScreenState extends ConsumerState<TestScreen> {
                 endColor: AppColor.secondRedColor,
                 text: 'i_can_not_hear'.tr(),
                 onPressed: () {
-                  ref.read(soundStateNotifierProvider.notifier).stop();
-                  ref.read(soundStateNotifierProvider.notifier).raiseVolume();
+                  Result result = Result(
+                      volume: ref.read(soundStateNotifierProvider).volume,
+                      frequency: ref.read(soundStateNotifierProvider).frequency,
+                      isLeft: ref.read(soundStateNotifierProvider).isLeft);
+                  ref.read(resultListProvider).add(result);
+                  print(ref.read(resultListProvider));
+                  ref
+                      .read(soundStateNotifierProvider.notifier)
+                      .resultSound
+                      .add(ref.watch(soundStateNotifierProvider));
+                  ref.read(soundStateNotifierProvider.notifier).cannotHear();
+
                   ref.read(soundStateNotifierProvider.notifier).playSound();
-                  // volume = ref.watch(soundStateNotifierProvider).volume;
 
-                  // print(volume);
-
-                  // SoundGenerator.setVolume(volume);
-                  // SoundGenerator.play();
+                  if (isFinished) {
+                    Navigator.pushNamed(context, Routes.result);
+                  }
                 },
               ),
             ),
@@ -205,6 +231,4 @@ class _TestScreenState extends ConsumerState<TestScreen> {
       ),
     );
   }
-
-  void changeVolume(int volume) {}
 }
