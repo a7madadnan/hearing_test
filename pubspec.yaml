@@ -14,7 +14,6 @@ dependencies:
     sdk: flutter
  
   cupertino_icons: ^1.0.2
-  sound_generator: ^0.0.9
   flutter_neumorphic: ^3.0.3
   easy_localization: ^3.0.1
   lottie: ^2.3.2
