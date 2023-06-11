@@ -21,6 +21,8 @@ dependencies:
   headset_connection_event: ^3.0.0
   hooks_riverpod: ^2.3.6
   volume_controller: ^2.0.6
+  audioplayers: ^4.1.0
+  simple_circular_progress_bar: ^1.0.2
 
  
 
@@ -40,6 +42,7 @@ flutter:
   assets:
     - assets/translations/
     - assets/lottie/
+    - assets/tones/
   fonts:
     - family: Cairo
       fonts:
