@@ -9,6 +9,10 @@
     "left_ear":"Left Ear",
     "right_ear":"Right Ear",
     "i_Can_hear": "I Can Hear",
-    "i_can_not_hear": "I Can Not Hear"
+    "i_can_not_hear": "I Can Not Hear",
+    "test": "Test",
+    "test_result": "Test Result",
+    "the_right_ear_has_normal_hearing": "The right ear has normal hearing",
+    "the_left_ear_has_normal_hearing": "The left ear has normal hearing"
 
 }

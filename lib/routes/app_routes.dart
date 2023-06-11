@@ -1,6 +1,7 @@
 
+
+import 'package:hearing_test/result/view/result_screen.dart';
 import 'package:hearing_test/setup/view/setup_screen.dart';
-import 'package:hearing_test/test/view/function/sound_generate.dart';
 import 'package:hearing_test/welcome/view/welcome_screen.dart';
 
 import '../test/view/test_screen.dart';
@@ -11,7 +12,7 @@ class AppRoutes {
     Routes.welcome: (context) => const WelcomeScreen(),
     Routes.setup: (context)=> const SetupScreen(),
     Routes.test: (context)=> const TestScreen(),
-    Routes.gen: (context)=> const SoundGen()
+    Routes.result: (context)=> const ResultScreen()
   
   };
 }

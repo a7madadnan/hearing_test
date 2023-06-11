@@ -9,5 +9,9 @@
     "left_ear":"ألأذن اليسرى",
     "right_ear":"ألأذن اليمنى",
     "i_can_hear": "أستطيع السماع",
-    "i_can_not_hear": "لا أستطيع السماع"
+    "i_can_not_hear": "لا أستطيع السماع",
+    "test": "ألفحص",
+    "test_result": "نتيجة الفحص",
+    "the_right_ear_has_normal_hearing": "مستوى السمع في الاذن اليمنى طبيعي",
+    "the_left_ear_has_normal_hearing": "مستوى السمع في الاذن اليسرى طبيعي"
 }
